@@ -1,0 +1,17 @@
+{
+  "name": "attiwohelp2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-ganache": "ganache-cli --db ganache_data -i 5777 -m \"test dignity cupboard vault crazy jar sand write trap humor glimpse feel\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.4.1",
+    "web3": "^1.6.1"
+  }
+}
