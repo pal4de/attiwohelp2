@@ -20,11 +20,12 @@ contract IoTMicropayment {
         uint256 _timeout,
         uint256 _unitPrice
     ) payable {
-        require(msg.value > 0, "");
+        require(msg.value > 0, "deposit amount is not enough");
         buyer = msg.sender;
         seller = _seller;
         timeout = _timeout;
         unitPrice = _unitPrice;
+        startDate = block.timestamp;
     }
 
     modifier onlySeller() {
@@ -40,11 +41,8 @@ contract IoTMicropayment {
         require(!usedNonces[nonce]);
         usedNonces[nonce] = true;
 
-        bytes32 message = prefixed(
-            keccak256(abi.encodePacked(msg.sender, amount, nonce, this))
-        );
         require(
-            recoverSigner(message, signature) == buyer,
+            verifySignature(msg.sender, amount, nonce, signature),
             "signer does not matched"
         );
 
@@ -54,6 +52,18 @@ contract IoTMicropayment {
     function channelTimeout() public {
         require(startDate + timeout <= block.timestamp, "not yet timed out");
         selfdestruct(payable(buyer));
+    }
+
+    function verifySignature(
+        address signer,
+        uint256 amount,
+        uint256 nonce,
+        bytes memory signature
+    ) internal view returns (bool) {
+        bytes32 message = prefixed(
+            keccak256(abi.encodePacked(signer, amount, nonce, this))
+        );
+        return recoverSigner(message, signature) == signer;
     }
 
     function recoverSigner(bytes32 message, bytes memory signature)
@@ -86,10 +96,10 @@ contract IoTMicropayment {
         return (v, r, s);
     }
 
-    function prefixed(bytes32 hash) internal pure returns (bytes32) {
+    function prefixed(bytes32 _hash) public pure returns (bytes32) {
         return
             keccak256(
-                abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
+                abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash)
             );
     }
 }
