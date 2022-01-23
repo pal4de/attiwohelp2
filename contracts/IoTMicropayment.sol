@@ -12,6 +12,7 @@ contract IoTMicropayment {
 
     uint256 public unitPrice;
     mapping(bytes32 => address) private signatures;
+    uint256 public withdrawed;
 
     mapping(uint256 => bool) usedNonces;
 
@@ -42,11 +43,13 @@ contract IoTMicropayment {
         usedNonces[nonce] = true;
 
         require(
-            verifySignature(msg.sender, amount, nonce, signature),
+            verifySignature(buyer, amount, nonce, signature),
             "signer does not matched"
         );
 
-        payable(seller).transfer(amount);
+        uint256 amountToSend = amount * unitPrice - withdrawed;
+        withdrawed += amountToSend;
+        payable(seller).transfer(amountToSend);
     }
 
     function channelTimeout() public {

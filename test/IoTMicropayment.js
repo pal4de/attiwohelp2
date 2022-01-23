@@ -1,75 +1,50 @@
 const IoTMicropayment = artifacts.require("IoTMicropayment");
 
-contract("IoTMicropayment", (accounts) => {
-    describe("System", async () => {
-        let instance;
-        const [buyer, seller, thirdperson] = accounts;
+contract("IoTMicropayment", () => {
+    describe("支払い", async () => {
+        let instance, buyer, seller;
+
         before(async () => {
             instance = await IoTMicropayment.deployed();
+
+            const buyerPrivateKey = "0xa7cc8232ebd84cb2e7ec6548247958349245f2f7fa5ae8932ee685c3e4e337cc";
+            const sellerPrivateKey = "0x68612f49e208e4520576b8d7c4a3a0a92099eff5ff0293c8783303a13eba92de";
+            web3.eth.accounts.wallet.add(buyerPrivateKey);
+            web3.eth.accounts.wallet.add(sellerPrivateKey);
+            buyer = web3.eth.accounts.wallet[0];
+            seller = web3.eth.accounts.wallet[1];
         });
 
-        // it("署名の検証", async () => {
-        //     const publicKey = new BN("deadbeef", 16);
+        it("署名の検証", async () => {
+            const actBuyer = async () => {
+                const amount = 50;
+                const nonce = 1;
 
-        //     await instance.setPubkey(publicKey);
-        //     const ret = await instance.getPubkey(buyer);
-        //     assert.equal(ret.toString(), publicKey.toString());
-        // });
+                const hash = web3.utils.soliditySha3(
+                    { t: "address", v: buyer.address },
+                    { t: "uint256", v: amount },
+                    { t: "uint256", v: nonce },
+                    { t: "address", v: instance.address }
+                ).toString("hex");
+                const { signature } = await buyer.sign(hash);
+                console.log(signature);
+                // const signature  = await web3.eth.sign(hash, buyer.address);
 
-        /*
-        it("データの送信", async () => {
-            const hashed = 1;
-            const price = new BN(100);
-            await instance.addItem(hashed, price);
-            const ret = await instance.getItem(hashed);
+                const params = [amount, nonce];
+                return [params, signature];
+            }
 
-            const { "0": priceRet, "1": ownerRet } = ret;
-            assert.equal(priceRet.toString(), price.toString());
-            assert.equal(ownerRet, buyer);
-        });
+            const actSeller = async (params, signature) => {
+                const options = { from: seller.address }
+                const result = await instance.claimPayment(...params, signature, options);
+                return result;
+            }
 
-        it("データの購入", async () => {
+            assert.equal(buyer.address, await instance.buyer());
+            assert.equal(seller.address, await instance.seller());
 
-            const hashed = 1;
-            const encrypted = 2929291;
-            const price = new BN(100);
-
-            await instance.addItem(hashed, price, { from: seller });
-
-            try {
-                await instance.buyItem(hashed, { value: price });
-                assert.fail();
-            } catch (_) { }
-            const ret = await instance.buyItem(hashed, {
-                from: buyer,
-                value: price,
-            });
-            const event = ret.logs.find((log) => log.event == "RequestedToSendData");
-            if (!event) assert.fail();
-            // @ts-expect-error
-            // TruffleがTypeScriptをトランスパイルしないのが悪い
-            const dealID = event.args[2];
-
-            try {
-                await instance.sendData(dealID, encrypted, { from: buyer });
-                assert.fail();
-            } catch (_) { }
-            try {
-                await instance.sendData(dealID, encrypted, { from: thirdperson });
-                assert.fail();
-            } catch (_) { }
-            await instance.sendData(dealID, encrypted, { from: seller });
-
-            try {
-                await instance.acceptData(dealID, { from: buyer });
-                assert.fail();
-            } catch (_) { }
-            try {
-                await instance.acceptData(dealID, { from: thirdperson });
-                assert.fail();
-            } catch (_) { }
-            await instance.acceptData(dealID, { from: buyer });
-        });
-        */
-    })
+            const [params, signature] = await actBuyer();
+            await actSeller(params, signature);
+        })
+    });
 });

@@ -34,7 +34,11 @@ const actSeller = async (params, signature) => {
     const contract = new web3.eth.Contract(IoTMicropayment.abi, contractAddress);
     const { verifySignature } = contract.methods;
 
-    const result = await verifySignature(...params, signature).call();
+    const options = {
+        from: seller.address
+    }
+
+    const result = await verifySignature(...params, signature, options).call();
     return result;
 }
 
