@@ -2,12 +2,16 @@ const IoTMicropayment = artifacts.require("IoTMicropayment");
 
 contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
   describe("System", async () => {
+    let instance;
     before(async () => {
       instance = await IoTMicropayment.deployed();
     });
 
+    const balanceOf = async (address) => await web3.eth.getBalance(address);
+
     it("支払い", async () => {
       const actBuyer = async () => {
+        // ヘッダ長 (？) が付与される必要がある
         const fixSignature = (original) => {
           const constant = 0x1bn;
           const added = (BigInt(original) + constant);
@@ -42,8 +46,17 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       assert.equal(await instance.buyer(), buyer);
       assert.equal(await instance.seller(), seller);
 
+      const balanceBefore = await balanceOf(seller);
       const [params, signature] = await actBuyer();
-      await actSeller(params, signature);
+      const result = await actSeller(params, signature);
+      const balanceAfter = await balanceOf(seller);
+      console.log(result);
+
+      assert.isOk(BigInt(balanceAfter) > BigInt(balanceBefore));
+      console.log({
+        before: balanceBefore,
+        after: balanceAfter
+      })
     })
   });
 });

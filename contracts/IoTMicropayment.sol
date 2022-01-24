@@ -42,6 +42,8 @@ contract IoTMicropayment {
         require(!usedNonces[nonce]);
         usedNonces[nonce] = true;
 
+        uint256 startGas = gasleft();
+
         require(
             verifySignature(buyer, amount, nonce, signature),
             "signer does not matched"
@@ -49,7 +51,9 @@ contract IoTMicropayment {
 
         uint256 amountToSend = amount * unitPrice - withdrawed;
         withdrawed += amountToSend;
-        payable(seller).transfer(amountToSend);
+
+        uint256 gasUsed = startGas - gasleft();
+        payable(seller).transfer(amountToSend + gasUsed);
     }
 
     function channelTimeout() public {

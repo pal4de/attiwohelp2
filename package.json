@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start-ganache": "ganache-cli --db ganache_data -i 5777 -m \"test dignity cupboard vault crazy jar sand write trap humor glimpse feel\" -v"
+    "start-ganache": "ganache-cli -i 5777 -m \"test dignity cupboard vault crazy jar sand write trap humor glimpse feel\" -v"
   },
   "keywords": [],
   "author": "",
