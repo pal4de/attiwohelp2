@@ -14,7 +14,7 @@ module.exports = function (deployer) {
   }
 
   const ethInYen = 277852; // 2022年1月24日 12:20現在 BitFlyerにて
-  const unitPriceInYen = 500;
+  const unitPriceInYen = 0.5;
 
   const unitPrice = calcUnitPrice(ethInYen, unitPriceInYen);
   const args = [
@@ -22,6 +22,6 @@ module.exports = function (deployer) {
     30 * 24 * 60 * 60,
     unitPrice
   ];
-  const options = { value: unitPrice.mul(BN(100)) };
+  const options = { value: unitPrice.mul(BN(10000)) };
   deployer.deploy(IoTMicroPayment, ...args, options);
 };

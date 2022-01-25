@@ -28,8 +28,8 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
           return fixSignature(await web3.eth.sign(hash, buyer));
         }
 
-        const amount = 50;
-        const nonce = 2;
+        const amount = 10;
+        const nonce = 1;
 
         const params = [amount, nonce];
         const signature = await makeSignature(amount, nonce);
@@ -38,7 +38,11 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       }
 
       const actSeller = async (params, signature) => {
-        const options = { from: seller }
+        const options = {
+          from: seller,
+          // gasPrice: web3.utils.toWei("1", "gwei"),
+          gasPrice: 1,
+        };
         const result = await instance.claimPayment(...params, signature, options);
         return result;
       }
@@ -53,10 +57,17 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       console.log(result);
 
       assert.isOk(BigInt(balanceAfter) > BigInt(balanceBefore));
+
       console.log({
         before: balanceBefore,
         after: balanceAfter
       })
+      const expectedEarning = BigInt(params[0]) * BigInt(await instance.unitPrice());
+      const acctualEarning = BigInt(balanceAfter) - BigInt(balanceBefore);
+
+      console.log("expected:", expectedEarning);
+      console.log("acctual:", acctualEarning);
+      console.log("diff:", expectedEarning - acctualEarning);
     })
   });
 });
