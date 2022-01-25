@@ -1,5 +1,24 @@
 const IoTMicropayment = artifacts.require("IoTMicropayment");
 
+class Parameter {
+  constructor() {
+    this.nonce = 0;
+    this.amount = 0;
+  }
+
+  gen(amount) {
+    this.amount += amount;
+    return {
+      nonce: this.nonce++,
+      amount: this.amount,
+    };
+  }
+}
+
+const BN = (x) => web3.utils.BN(x);
+
+const balanceOf = async (address) => BigInt(await web3.eth.getBalance(address));
+
 contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
   describe("System", async () => {
     let instance;
@@ -7,67 +26,91 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       instance = await IoTMicropayment.deployed();
     });
 
-    const balanceOf = async (address) => await web3.eth.getBalance(address);
+    const parameter = new Parameter();
 
-    it("支払い", async () => {
-      const actBuyer = async () => {
-        // ヘッダ長 (？) が付与される必要がある
-        const fixSignature = (original) => {
-          const constant = 0x1bn;
-          const added = (BigInt(original) + constant);
-          return "0x" + added.toString(16).padStart(130, "0");
-        }
-
-        const makeSignature = async (amount, nonce) => {
-          const hash = web3.utils.soliditySha3(
-            { t: "address", v: buyer },
-            { t: "uint256", v: amount },
-            { t: "uint256", v: nonce },
-            { t: "address", v: instance.address }
-          ).toString("hex");
-          return fixSignature(await web3.eth.sign(hash, buyer));
-        }
-
-        const amount = 10;
-        const nonce = 1;
-
-        const params = [amount, nonce];
-        const signature = await makeSignature(amount, nonce);
-
-        return [params, signature];
+    const actBuyer = async ({ amount, nonce }) => {
+      // ヘッダ長 (？) が付与される必要がある
+      const fixSignature = (original) => {
+        const constant = 0x1bn;
+        const added = (BigInt(original) + constant);
+        return "0x" + added.toString(16).padStart(130, "0");
       }
 
-      const actSeller = async (params, signature) => {
-        const options = {
-          from: seller,
-          // gasPrice: web3.utils.toWei("1", "gwei"),
-          gasPrice: 1,
-        };
-        const result = await instance.claimPayment(...params, signature, options);
-        return result;
-      }
+      const hash = web3.utils.soliditySha3(
+        { t: "address", v: buyer },
+        { t: "uint256", v: amount },
+        { t: "uint256", v: nonce },
+        { t: "address", v: instance.address }
+      ).toString("hex");
+      const signature = fixSignature(await web3.eth.sign(hash, buyer));
+      return signature;
+    }
 
+    const actSeller = async ({ amount, nonce }, signature) => {
+      const options = {
+        from: seller,
+        // gasPrice: web3.utils.toWei("1", "gwei"),
+        gasPrice: 1,
+      };
+      const result = await instance.claimPayment(amount, nonce, signature, options);
+      return result;
+    }
+
+    it("アドレスの一致", async () => {
       assert.equal(await instance.buyer(), buyer);
       assert.equal(await instance.seller(), seller);
+    });
+
+    it("単純な送金", async () => {
+      const params = parameter.gen(10);
 
       const balanceBefore = await balanceOf(seller);
-      const [params, signature] = await actBuyer();
+      const signature = await actBuyer(params);
       const result = await actSeller(params, signature);
       const balanceAfter = await balanceOf(seller);
-      console.log(result);
 
-      assert.isOk(BigInt(balanceAfter) > BigInt(balanceBefore));
-
-      console.log({
-        before: balanceBefore,
-        after: balanceAfter
-      })
-      const expectedEarning = BigInt(params[0]) * BigInt(await instance.unitPrice());
+      const expectedEarning = BigInt(params.amount) * BigInt(await instance.unitPrice());
       const acctualEarning = BigInt(balanceAfter) - BigInt(balanceBefore);
 
       console.log("expected:", expectedEarning);
       console.log("acctual:", acctualEarning);
-      console.log("diff:", expectedEarning - acctualEarning);
-    })
+      console.log("charge:", expectedEarning - acctualEarning);
+    });
+
+    it("パラメータ書き換えの拒否", async () => {
+      const params = parameter.gen(10);
+      const signature = await actBuyer(params);
+
+      try {
+        await actSeller({ ...params, amount: params.nonce + 10 }, signature);
+        assert.fail();
+      } catch (e) {
+        assert.equal(e.reason, "signer does not matched", "amountの書き換えが拒否されていません");
+      }
+
+      try {
+        await actSeller({ ...params, nonce: params.nonce + 1 }, signature);
+        assert.fail();
+      } catch (e) {
+        assert.equal(e.reason, "signer does not matched", "nonceの書き換えが拒否されていません");
+      }
+
+      // 正常なパラメータなら成功
+      await actSeller(params, signature);
+    });
+
+    // it("二度の送金", async () => {
+    //   const amount1 = 10;
+    //   const amount2 = 20;
+    //   const params1 = p.gen(amount1);
+    //   const params2 = p.gen(amount2);
+
+    //   {
+    //     const before = await balanceOf(seller);
+    //     const signature = await actBuyer(params1);
+    //     const result = await actSeller(params1, signature);
+    //     const after = await balanceOf(seller);
+    //   }
+    // });
   });
 });

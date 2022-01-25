@@ -47,6 +47,7 @@ contract IoTMicropayment {
         );
 
         uint256 amountToSend = amount * unitPrice - withdrawed;
+        require(amountToSend > 0, "transfer amount is under zero");
         withdrawed += amountToSend;
         payable(seller).transfer(amountToSend);
     }
