@@ -99,18 +99,32 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       await actSeller(params, signature);
     });
 
-    // it("二度の送金", async () => {
-    //   const amount1 = 10;
-    //   const amount2 = 20;
-    //   const params1 = p.gen(amount1);
-    //   const params2 = p.gen(amount2);
+    it("複数回の送金", async () => {
+      const unitPrice = BigInt(await instance.unitPrice());
 
-    //   {
-    //     const before = await balanceOf(seller);
-    //     const signature = await actBuyer(params1);
-    //     const result = await actSeller(params1, signature);
-    //     const after = await balanceOf(seller);
-    //   }
-    // });
+      const claim = async (amount) => {
+        const params = parameter.gen(amount);
+
+        const balanceBefore = await balanceOf(seller);
+        const signature = await actBuyer(params);
+        const result = await actSeller(params, signature);
+        const balanceAfter = await balanceOf(seller);
+
+        const expectedEarning = BigInt(amount) * unitPrice;
+        const acctualEarning = BigInt(balanceAfter) - BigInt(balanceBefore);
+        const charge = expectedEarning - acctualEarning;
+        return charge;
+      }
+
+      const charges = [
+        await claim(10),
+        await claim(10),
+        await claim(10),
+        await claim(20),
+        await claim(20),
+        await claim(30)
+      ];
+      console.log(charges);
+    });
   });
 });
