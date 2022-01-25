@@ -55,7 +55,7 @@ contract IoTMicropayment {
         payable(seller).transfer(amountToSend);
     }
 
-    function channelTimeout() public {
+    function claimTimeout() public {
         require(startDate + timeout <= block.timestamp, "not yet timed out");
         selfdestruct(payable(buyer));
     }

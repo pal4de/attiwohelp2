@@ -142,5 +142,12 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
         assert.equal(e.reason, "transfer amount is under zero");
       }
     });
+
+    it("タイムアウト", async () => {
+      const balanceBefore = await balanceOf(buyer);
+      await instance.claimTimeout({ from: buyer });
+      const balanceAfter = await balanceOf(buyer);
+      assert.isOk(balanceBefore < balanceAfter);
+    });
   });
 });

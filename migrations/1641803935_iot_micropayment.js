@@ -19,7 +19,8 @@ module.exports = function (deployer) {
   const unitPrice = calcUnitPrice(ethInYen, unitPriceInYen);
   const args = [
     "0xb7E478a1b92C8312CE298Fd1F7500ed8BEDD4DA7", // accounts[1]
-    30 * 24 * 60 * 60,
+    // 30 * 24 * 60 * 60,
+    0, // タイムアウトのテストのため
     unitPrice
   ];
   const options = { value: unitPrice.mul(BN(10000)) };
