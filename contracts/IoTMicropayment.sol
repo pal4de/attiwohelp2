@@ -46,8 +46,11 @@ contract IoTMicropayment {
             "signer does not matched"
         );
 
+        require(
+            amount * unitPrice > withdrawed,
+            "transfer amount is under zero"
+        );
         uint256 amountToSend = amount * unitPrice - withdrawed;
-        require(amountToSend > 0, "transfer amount is under zero");
         withdrawed += amountToSend;
         payable(seller).transfer(amountToSend);
     }

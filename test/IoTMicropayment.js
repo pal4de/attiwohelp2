@@ -83,16 +83,16 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
       try {
         await actSeller({ ...params, amount: params.nonce + 10 }, signature);
-        assert.fail();
+        assert.fail("amountの書き換えが拒否されていません");
       } catch (e) {
-        assert.equal(e.reason, "signer does not matched", "amountの書き換えが拒否されていません");
+        assert.equal(e.reason, "signer does not matched");
       }
 
       try {
         await actSeller({ ...params, nonce: params.nonce + 1 }, signature);
-        assert.fail();
+        assert.fail("nonceの書き換えが拒否されていません");
       } catch (e) {
-        assert.equal(e.reason, "signer does not matched", "nonceの書き換えが拒否されていません");
+        assert.equal(e.reason, "signer does not matched");
       }
 
       // 正常なパラメータなら成功
@@ -125,6 +125,22 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
         await claim(30)
       ];
       console.log(charges);
+    });
+
+    it("amoutが足りないとき拒否", async () => {
+      const params1 = parameter.gen(10);
+      const signature1 = await actBuyer(params1);
+
+      const params2 = parameter.gen(10);
+      const signature2 = await actBuyer(params2);
+
+      await actSeller(params2, signature2);
+      try {
+        await actSeller(params1, signature1);
+        assert.fail("amoutが足りないとき拒否できていません");
+      } catch (e) {
+        assert.equal(e.reason, "transfer amount is under zero");
+      }
     });
   });
 });
