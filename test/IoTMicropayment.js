@@ -29,28 +29,19 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
     const parameter = new Parameter();
 
     const actBuyer = async ({ amount, nonce }) => {
-      // ヘッダ長 (？) が付与される必要がある
-      const fixSignature = (original) => {
-        const constant = 0x1bn;
-        const added = (BigInt(original) + constant);
-        return "0x" + added.toString(16).padStart(130, "0");
-      }
-
       const hash = web3.utils.soliditySha3(
         { t: "address", v: buyer },
         { t: "uint256", v: amount },
         { t: "uint256", v: nonce },
         { t: "address", v: instance.address }
       ).toString("hex");
-      const signature = fixSignature(await web3.eth.sign(hash, buyer));
-      return signature;
+      return await web3.eth.sign(hash, buyer);
     }
 
     const actSeller = async ({ amount, nonce }, signature) => {
       const options = {
         from: seller,
-        // gasPrice: web3.utils.toWei("1", "gwei"),
-        gasPrice: 1,
+        gasPrice: web3.utils.toWei("1", "gwei"),
       };
       const result = await instance.claimPayment(amount, nonce, signature, options);
       return result;
