@@ -70,13 +70,13 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       return result;
     }
 
-    const test = async (instance, params) => {
+    const test = async (instance, params, amount = null) => {
       const balanceBefore = await balanceOf(seller);
       const signature = await actBuyer(instance, params);
       const result = await actSeller(instance, params, signature);
       const balanceAfter = await balanceOf(seller);
 
-      const expected = BigInt(params.amount) * BigInt(await instance.unitPrice());
+      const expected = BigInt(amount ?? params.amount) * BigInt(await instance.unitPrice());
       const actual = BigInt(balanceAfter) - BigInt(balanceBefore);
       const txFee = expected - actual;
       return [expected, actual, txFee];
@@ -146,7 +146,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let nonce = 1; nonce <= 80; nonce++) {
         const params = parameter.gen(1);
-        const [expected, actual, txFee] = await test(instance, params);
+        const [expected, actual, txFee] = await test(instance, params, 1);
 
         const row = [
           nonce,
