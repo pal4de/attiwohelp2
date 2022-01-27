@@ -135,35 +135,6 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       progress.stop();
     });
 
-    it("同一コントラクトと手数料の関係", async () => {
-      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      progress.start(80, 1);
-
-      const instance = await newInstance();
-      const parameter = new Parameter();
-
-      let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
-      for (let nonce = 1; nonce <= 80; nonce++) {
-        const params = parameter.gen(1);
-        const [expected, actual, txFee] = await tx(instance, params, 1);
-
-        const row = [
-          nonce,
-          expected,
-          actual,
-          txFee,
-          weiToYen(expected),
-          weiToYen(actual),
-          weiToYen(txFee),
-        ]
-        csv += `${row.join(", ")}\n`;
-
-        progress.increment();
-      }
-      fs.writeFileSync("result/single.csv", csv);
-      progress.stop();
-    });
-
     it("単価と手数料の関係", async () => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
       progress.start(102, 1);
@@ -188,6 +159,93 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
         progress.increment();
       }
       fs.writeFileSync("result/unitPrice.csv", csv);
+      progress.stop();
+    });
+
+    it("継続的な取引と手数料の関係 (1つずつ)", async () => {
+      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      progress.start(80, 1);
+
+      const instance = await newInstance();
+      const parameter = new Parameter();
+
+      let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
+      for (let nonce = 1; nonce <= 80; nonce++) {
+        const params = parameter.gen(1);
+        const [expected, actual, txFee] = await tx(instance, params, 1);
+
+        const row = [
+          nonce,
+          expected,
+          actual,
+          txFee,
+          weiToYen(expected),
+          weiToYen(actual),
+          weiToYen(txFee),
+        ]
+        csv += `${row.join(", ")}\n`;
+
+        progress.increment();
+      }
+      fs.writeFileSync("result/sequential-01.csv", csv);
+      progress.stop();
+    });
+
+    it("継続的な取引と手数料の関係 (5つずつ)", async () => {
+      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      progress.start(16, 1);
+
+      const instance = await newInstance();
+      const parameter = new Parameter();
+
+      let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
+      for (let nonce = 1; nonce <= 16; nonce++) {
+        const params = parameter.gen(5);
+        const [expected, actual, txFee] = await tx(instance, params, 5);
+
+        const row = [
+          nonce,
+          expected,
+          actual,
+          txFee,
+          weiToYen(expected),
+          weiToYen(actual),
+          weiToYen(txFee),
+        ]
+        csv += `${row.join(", ")}\n`;
+
+        progress.increment();
+      }
+      fs.writeFileSync("result/sequential-05.csv", csv);
+      progress.stop();
+    });
+
+    it("継続的な取引と手数料の関係 (10ずつ)", async () => {
+      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      progress.start(8, 1);
+
+      const instance = await newInstance();
+      const parameter = new Parameter();
+
+      let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
+      for (let nonce = 1; nonce <= 8; nonce++) {
+        const params = parameter.gen(10);
+        const [expected, actual, txFee] = await tx(instance, params, 10);
+
+        const row = [
+          nonce,
+          expected,
+          actual,
+          txFee,
+          weiToYen(expected),
+          weiToYen(actual),
+          weiToYen(txFee),
+        ]
+        csv += `${row.join(", ")}\n`;
+
+        progress.increment();
+      }
+      fs.writeFileSync("result/sequential-10.csv", csv);
       progress.stop();
     });
   });
