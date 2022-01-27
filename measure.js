@@ -18,7 +18,6 @@ class Parameter {
 }
 
 const ethInYen = 277852; // 2022年1月24日 12:20現在 BitFlyerにて
-const unitPriceInYen = 0.5;
 
 const BN = (x) => new web3.utils.BN(x);
 
@@ -26,31 +25,31 @@ const balanceOf = async (address) => BigInt(await web3.eth.getBalance(address));
 
 const weiToYen = (wei) => parseFloat(web3.utils.fromWei(`${wei}`, "ether")) * ethInYen;
 
-const genArgs = () => {
-  const calcUnitPrice = (ethInYen_, unitPriceInYen_) => {
-    const unitPriceInMilliYen = BN(unitPriceInYen_ * 1000);
-
-    const ethInYen = BN(ethInYen_);
-    const ethInWei = web3.utils.toWei(BN(1), "ether");
-    const yenInWei = ethInWei.div(ethInYen);
-
-    return unitPriceInMilliYen.mul(yenInWei).div(BN(1000));
-  }
-
-  const unitPrice = calcUnitPrice(ethInYen, unitPriceInYen);
-  const options = { value: unitPrice.mul(BN(10000)) };
-  return [
-    "0xb7E478a1b92C8312CE298Fd1F7500ed8BEDD4DA7", // accounts[1]
-    // 30 * 24 * 60 * 60,
-    0, // タイムアウトのテストのため
-    unitPrice,
-    options
-  ];
-}
-const args = genArgs();
-
 contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
   describe("System", async () => {
+    const newInstance = async (unitPriceInYen = 0.5) => {
+      const calcUnitPrice = (ethInYen_, unitPriceInYen_) => {
+        const unitPriceInMilliYen = BN(unitPriceInYen_ * 1000);
+
+        const ethInYen = BN(ethInYen_);
+        const ethInWei = web3.utils.toWei(BN(1), "ether");
+        const yenInWei = ethInWei.div(ethInYen);
+
+        return unitPriceInMilliYen.mul(yenInWei).div(BN(1000));
+      }
+
+      const unitPrice = calcUnitPrice(ethInYen, unitPriceInYen);
+      const timeout = 0;
+      const options = { value: unitPrice.mul(BN(10000)) };
+
+      return await IoTMicropayment.new(
+        seller,
+        timeout,
+        unitPrice,
+        options
+      );
+    }
+
     const actBuyer = async (instance, { amount, nonce }) => {
       const hash = web3.utils.soliditySha3(
         { t: "address", v: buyer },
@@ -70,7 +69,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       return result;
     }
 
-    const test = async (instance, params, amount = null) => {
+    const tx = async (instance, params, amount = null) => {
       const balanceBefore = await balanceOf(seller);
       const signature = await actBuyer(instance, params);
       const result = await actSeller(instance, params, signature);
@@ -88,9 +87,9 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
       let csv = "amount, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let amount = 1; amount <= 80; amount++) {
-        const instance = await IoTMicropayment.new(...args);
+        const instance = await newInstance();
         const params = { nonce: 1, amount };
-        const [expected, actual, txFee] = await test(instance, params);
+        const [expected, actual, txFee] = await tx(instance, params);
 
         const row = [
           amount,
@@ -115,9 +114,9 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
       let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let nonce = 1; nonce <= 80; nonce++) {
-        const instance = await IoTMicropayment.new(...args);
+        const instance = await newInstance();
         const params = { nonce, amount: 1 };
-        const [expected, actual, txFee] = await test(instance, params);
+        const [expected, actual, txFee] = await tx(instance, params);
 
         const row = [
           nonce,
@@ -140,13 +139,13 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
       progress.start(80, 1);
 
-      const instance = await IoTMicropayment.new(...args);
+      const instance = await newInstance();
       const parameter = new Parameter();
 
       let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let nonce = 1; nonce <= 80; nonce++) {
         const params = parameter.gen(1);
-        const [expected, actual, txFee] = await test(instance, params, 1);
+        const [expected, actual, txFee] = await tx(instance, params, 1);
 
         const row = [
           nonce,
