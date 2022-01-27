@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "truffle test --stacktrace",
+    "measure": "truffle test measure.js",
     "start:ganache": "ganache-cli -i 5777 -m \"test dignity cupboard vault crazy jar sand write trap humor glimpse feel\" -v"
   },
   "keywords": [],
@@ -12,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@openzeppelin/contracts": "^4.4.1",
+    "cli-progress": "^3.10.0",
     "web3": "^1.6.1"
   },
   "devDependencies": {

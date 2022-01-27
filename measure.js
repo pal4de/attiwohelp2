@@ -1,5 +1,6 @@
-const IoTMicropayment = artifacts.require("IoTMicropayment");
 var fs = require("fs");
+const cliProgress = require('cli-progress');
+const IoTMicropayment = artifacts.require("IoTMicropayment");
 
 class Parameter {
   constructor() {
@@ -22,6 +23,8 @@ const unitPriceInYen = 0.5;
 const BN = (x) => new web3.utils.BN(x);
 
 const balanceOf = async (address) => BigInt(await web3.eth.getBalance(address));
+
+const weiToYen = (wei) => parseFloat(web3.utils.fromWei(`${wei}`, "ether")) * ethInYen;
 
 const genArgs = () => {
   const calcUnitPrice = (ethInYen_, unitPriceInYen_) => {
@@ -80,7 +83,10 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
     }
 
     it("amountと手数料の関係", async () => {
-      let csv = "amount, expected earnings, actual earning, tx fee\n";
+      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      progress.start(80, 1);
+
+      let csv = "amount, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let amount = 1; amount <= 80; amount++) {
         const instance = await IoTMicropayment.new(...args);
         const params = { nonce: 1, amount };
@@ -91,15 +97,23 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
           expected,
           actual,
           txFee,
+          weiToYen(expected),
+          weiToYen(actual),
+          weiToYen(txFee),
         ]
         csv += `${row.join(", ")}\n`;
-      }
 
-      fs.writeFileSync("result/amount-txFee.csv", csv);
+        progress.update(amount);
+      }
+      fs.writeFileSync("result/amount.csv", csv);
+      progress.stop();
     });
 
     it("nonceと手数料の関係", async () => {
-      let csv = "nonce, expected earnings, actual earning, tx fee\n";
+      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      progress.start(80, 1);
+
+      let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let nonce = 1; nonce <= 80; nonce++) {
         const instance = await IoTMicropayment.new(...args);
         const params = { nonce, amount: 1 };
@@ -110,18 +124,26 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
           expected,
           actual,
           txFee,
+          weiToYen(expected),
+          weiToYen(actual),
+          weiToYen(txFee),
         ]
         csv += `${row.join(", ")}\n`;
-      }
 
-      fs.writeFileSync("result/nonce-txFee.csv", csv);
+        progress.update(nonce);
+      }
+      fs.writeFileSync("result/nonce.csv", csv);
+      progress.stop();
     });
 
-    it("nonceと手数料の関係 (同一コントラクト)", async () => {
+    it("同一コントラクトと手数料の関係", async () => {
+      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      progress.start(80, 1);
+
       const instance = await IoTMicropayment.new(...args);
       const parameter = new Parameter();
 
-      let csv = "nonce, expected earnings, actual earning, tx fee\n";
+      let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let nonce = 1; nonce <= 80; nonce++) {
         const params = parameter.gen(1);
         const [expected, actual, txFee] = await test(instance, params);
@@ -131,11 +153,16 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
           expected,
           actual,
           txFee,
+          weiToYen(expected),
+          weiToYen(actual),
+          weiToYen(txFee),
         ]
         csv += `${row.join(", ")}\n`;
-      }
 
-      fs.writeFileSync("result/nonce-txFee-single.csv", csv);
+        progress.update(nonce);
+      }
+      fs.writeFileSync("result/single.csv", csv);
+      progress.stop();
     });
   });
 });
