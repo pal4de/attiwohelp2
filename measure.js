@@ -102,7 +102,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
         ]
         csv += `${row.join(", ")}\n`;
 
-        progress.update(amount);
+        progress.increment();
       }
       fs.writeFileSync("result/amount.csv", csv);
       progress.stop();
@@ -129,7 +129,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
         ]
         csv += `${row.join(", ")}\n`;
 
-        progress.update(nonce);
+        progress.increment();
       }
       fs.writeFileSync("result/nonce.csv", csv);
       progress.stop();
@@ -158,9 +158,36 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
         ]
         csv += `${row.join(", ")}\n`;
 
-        progress.update(nonce);
+        progress.increment();
       }
       fs.writeFileSync("result/single.csv", csv);
+      progress.stop();
+    });
+
+    it("単価と手数料の関係", async () => {
+      const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      progress.start(102, 1);
+
+      let csv = "unit price (yen), expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
+      for (let unitPrice = 0; unitPrice < 50; unitPrice += 0.5) {
+        const instance = await newInstance();
+        const params = { nonce: 1, amount: 1 };
+        const [expected, actual, txFee] = await tx(instance, params);
+
+        const row = [
+          unitPrice,
+          expected,
+          actual,
+          txFee,
+          weiToYen(expected),
+          weiToYen(actual),
+          weiToYen(txFee),
+        ]
+        csv += `${row.join(", ")}\n`;
+
+        progress.increment();
+      }
+      fs.writeFileSync("result/unitPrice.csv", csv);
       progress.stop();
     });
   });
