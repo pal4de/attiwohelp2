@@ -1,4 +1,5 @@
-var fs = require("fs");
+const iconv = require("iconv-lite");
+const fs = require("fs");
 const cliProgress = require('cli-progress');
 const { assert } = require("console");
 const IoTMicropayment = artifacts.require("IoTMicropayment");
@@ -25,6 +26,12 @@ const BN = (x) => new web3.utils.BN(x);
 const balanceOf = async (address) => BigInt(await web3.eth.getBalance(address));
 
 const weiToYen = (wei) => parseFloat(web3.utils.fromWei(`${wei}`, "ether")) * ethInYen;
+
+const writeOut = (content, name) => {
+  const writer = fs.createWriteStream(`result/${name}.csv`);
+  writer.write(iconv.encode(content, "Shift_JIS"));
+  writer.end();
+}
 
 contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
   describe("System", async () => {
@@ -102,7 +109,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
         progress.increment();
       }
-      fs.writeFileSync("result/amount.csv", csv);
+      writeOut(csv, "amount");
       progress.stop();
     });
 
@@ -126,7 +133,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
         progress.increment();
       }
-      fs.writeFileSync("result/nonce.csv", csv);
+      writeOut(csv, "nonce");
       progress.stop();
     });
 
@@ -150,7 +157,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
         progress.increment();
       }
-      fs.writeFileSync("result/unitPrice.csv", csv);
+      writeOut(csv, "unitPrice");
       progress.stop();
     });
 
@@ -176,7 +183,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
         progress.increment();
       }
-      fs.writeFileSync("result/sequential-01.csv", csv);
+      writeOut(csv, "sequential-01");
       progress.stop();
     });
 
@@ -202,7 +209,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
         progress.increment();
       }
-      fs.writeFileSync("result/sequential-05.csv", csv);
+      writeOut(csv, "sequential-05");
       progress.stop();
     });
 
@@ -228,7 +235,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
         progress.increment();
       }
-      fs.writeFileSync("result/sequential-10.csv", csv);
+      writeOut(csv, "sequential-10");
       progress.stop();
     });
 
@@ -259,7 +266,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
         multibar.remove(amountProgress);
         unitPriceProgress.increment();
       }
-      fs.writeFileSync("result/surplus.csv", csv);
+      writeOut(csv, "surplus");
       multibar.stop();
     });
   });
