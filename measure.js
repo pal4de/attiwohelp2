@@ -84,10 +84,10 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
     it("amountと手数料の関係", async () => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      progress.start(80, 1);
+      progress.start(100, 0);
 
       let csv = "amount, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
-      for (let amount = 1; amount <= 80; amount++) {
+      for (let amount = 1; amount <= 100; amount++) {
         const instance = await newInstance();
         const params = { nonce: 1, amount };
         const [expected, actual, txFee] = await tx(instance, params);
@@ -111,10 +111,10 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
     it("nonceと手数料の関係", async () => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      progress.start(80, 1);
+      progress.start(100, 0);
 
       let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
-      for (let nonce = 1; nonce <= 80; nonce++) {
+      for (let nonce = 1; nonce <= 100; nonce++) {
         const instance = await newInstance();
         const params = { nonce, amount: 1 };
         const [expected, actual, txFee] = await tx(instance, params);
@@ -138,7 +138,7 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
     it("単価と手数料の関係", async () => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      progress.start(102, 1);
+      progress.start(100, 0);
 
       let csv = "unit price (yen), expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
       for (let unitPrice = 0; unitPrice < 50; unitPrice += 0.5) {
@@ -165,13 +165,13 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
     it("継続的な取引と手数料の関係 (1つずつ)", async () => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      progress.start(80, 1);
+      progress.start(100, 0);
 
       const instance = await newInstance();
       const parameter = new Parameter();
 
       let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
-      for (let nonce = 1; nonce <= 80; nonce++) {
+      for (let nonce = 1; nonce <= 100; nonce++) {
         const params = parameter.gen(1);
         const [expected, actual, txFee] = await tx(instance, params, 1);
 
@@ -194,13 +194,13 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
     it("継続的な取引と手数料の関係 (5つずつ)", async () => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      progress.start(16, 1);
+      progress.start(20, 0);
 
       const instance = await newInstance();
       const parameter = new Parameter();
 
       let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
-      for (let nonce = 1; nonce <= 16; nonce++) {
+      for (let nonce = 1; nonce <= 20; nonce++) {
         const params = parameter.gen(5);
         const [expected, actual, txFee] = await tx(instance, params, 5);
 
@@ -223,13 +223,13 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
     it("継続的な取引と手数料の関係 (10ずつ)", async () => {
       const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-      progress.start(8, 1);
+      progress.start(10, 0);
 
       const instance = await newInstance();
       const parameter = new Parameter();
 
       let csv = "nonce, expected earnings, actual earning, tx fee, expected earnings (yen), actual earning (yen), tx fee (yen)\n";
-      for (let nonce = 1; nonce <= 8; nonce++) {
+      for (let nonce = 1; nonce <= 10; nonce++) {
         const params = parameter.gen(10);
         const [expected, actual, txFee] = await tx(instance, params, 10);
 
