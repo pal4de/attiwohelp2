@@ -1,5 +1,6 @@
 var fs = require("fs");
 const cliProgress = require('cli-progress');
+const { assert } = require("console");
 const IoTMicropayment = artifacts.require("IoTMicropayment");
 
 class Parameter {
@@ -247,6 +248,37 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       }
       fs.writeFileSync("result/sequential-10.csv", csv);
       progress.stop();
+    });
+
+    it("単価と損益分岐点の関係", async () => {
+      const multibar = new cliProgress.MultiBar({}, cliProgress.Presets.shades_classic);
+      const unitPriceProgress = multibar.create(51, 1);
+
+      let csv = "unit price (yen), amount\n";
+      for (let unitPrice = 0.1; unitPrice <= 5; unitPrice += 0.1) {
+        const upperLimit = Math.floor(50 / unitPrice);
+        const amountProgress = multibar.create(upperLimit, 1);
+
+        for (let amount = 1; amount <= upperLimit; amount++) {
+          const instance = await newInstance(unitPrice);
+          const params = { amount, nonce: amount };
+          const [expected, actual, txFee] = await tx(instance, params);
+
+          if (actual > 0) {
+            const row = [unitPrice, amount];
+            csv += `${row.join(", ")}\n`;
+            break;
+          } else {
+            amountProgress.update(amount);
+            if (amount == upperLimit) assert.failed();
+          }
+        }
+
+        multibar.remove(amountProgress);
+        unitPriceProgress.increment();
+      }
+      fs.writeFileSync("result/surplus.csv", csv);
+      multibar.stop();
     });
   });
 });
