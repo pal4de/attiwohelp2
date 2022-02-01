@@ -141,8 +141,8 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
 
     it("単価と手数料の関係", withProgress(50, async (increment) => {
       const csv = new Csv("unitPrice", ["単価", "引き出し金額", "販売者の残高の変動量", "取引手数料"]);
-      for (let unitPrice = 0; unitPrice < 50; unitPrice += 1) {
-        const instance = await newInstance();
+      for (let unitPrice = 0.1; unitPrice <= 5; unitPrice += 1) {
+        const instance = await newInstance(unitPrice);
         const params = { nonce: 1, amount: 1 };
         const [expected, actual, txFee] = await tx(instance, params);
 
@@ -152,44 +152,14 @@ contract("IoTMicropayment", ([buyer, seller, ...accounts]) => {
       csv.writeOut();
     }));
 
-    it("継続的な取引と手数料の関係 (1つずつ)", withProgress(50, async (increment) => {
+    it("引き出し回数と手数料の関係", withProgress(50, async (increment) => {
       const instance = await newInstance();
       const parameter = new Parameter();
 
-      const csv = new Csv("sequential-01", ["販売個数", "引き出し金額", "販売者の残高の変動量", "取引手数料"]);
-      for (let nonce = 1; nonce <= 100; nonce += 2) {
-        const params = parameter.gen(2);
+      const csv = new Csv("sequential", ["販売個数", "引き出し金額", "販売者の残高の変動量", "取引手数料"]);
+      for (let nonce = 1; nonce <= 50; nonce += 1) {
+        const params = parameter.gen(1);
         const [expected, actual, txFee] = await tx(instance, params, 1);
-
-        csv.add(params.amount, weiToYen(expected), weiToYen(actual), weiToYen(txFee));
-        increment();
-      }
-      csv.writeOut();
-    }));
-
-    it("継続的な取引と手数料の関係 (5つずつ)", withProgress(20, async (increment) => {
-      const instance = await newInstance();
-      const parameter = new Parameter();
-
-      const csv = new Csv("sequential-05", ["販売個数", "引き出し金額", "販売者の残高の変動量", "取引手数料"]);
-      for (let nonce = 1; nonce <= 20; nonce++) {
-        const params = parameter.gen(5);
-        const [expected, actual, txFee] = await tx(instance, params, 5);
-
-        csv.add(params.amount, weiToYen(expected), weiToYen(actual), weiToYen(txFee));
-        increment();
-      }
-      csv.writeOut();
-    }));
-
-    it("継続的な取引と手数料の関係 (10ずつ)", withProgress(10, async (increment) => {
-      const instance = await newInstance();
-      const parameter = new Parameter();
-
-      const csv = new Csv("sequential-10", ["販売個数", "引き出し金額", "販売者の残高の変動量", "取引手数料"]);
-      for (let nonce = 1; nonce <= 10; nonce++) {
-        const params = parameter.gen(10);
-        const [expected, actual, txFee] = await tx(instance, params, 10);
 
         csv.add(params.amount, weiToYen(expected), weiToYen(actual), weiToYen(txFee));
         increment();
