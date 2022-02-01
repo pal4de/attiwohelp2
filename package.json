@@ -6,7 +6,7 @@
   "scripts": {
     "test": "truffle test --stacktrace",
     "measure": "truffle test measure.js",
-    "start:ganache": "ganache-cli -i 5777 -m \"test dignity cupboard vault crazy jar sand write trap humor glimpse feel\" -v"
+    "start:ganache": "ganache-cli -i 5777 -m \"test dignity cupboard vault crazy jar sand write trap humor glimpse feel\" -v -e 100000"
   },
   "keywords": [],
   "author": "",
