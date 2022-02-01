@@ -5,14 +5,9 @@ contract IoTMicropayment {
     address public seller;
     address public buyer;
 
-    uint256 public startDate;
     uint256 public timeout;
-
     uint256 public unitPrice;
-    mapping(bytes32 => address) private signatures;
     uint256 public withdrawed;
-
-    mapping(uint256 => bool) usedNonces;
 
     constructor(
         address _seller,
@@ -24,7 +19,6 @@ contract IoTMicropayment {
         seller = _seller;
         timeout = _timeout;
         unitPrice = _unitPrice;
-        startDate = block.timestamp;
     }
 
     modifier onlySeller() {
@@ -36,25 +30,23 @@ contract IoTMicropayment {
         uint256 amount,
         uint256 nonce,
         bytes memory signature
-    ) public onlySeller {
-        require(!usedNonces[nonce]);
-        usedNonces[nonce] = true;
+    ) external onlySeller {
         require(
             verifySignature(buyer, amount, nonce, signature),
             "signer does not matched"
         );
-
         require(
             amount * unitPrice > withdrawed,
             "transfer amount is under zero"
         );
+
         uint256 amountToSend = amount * unitPrice - withdrawed;
-        withdrawed += amountToSend;
+        withdrawed = amount * unitPrice;
         payable(seller).transfer(amountToSend);
     }
 
-    function claimTimeout() public {
-        require(startDate + timeout <= block.timestamp, "not yet timed out");
+    function claimTimeout() external {
+        require(timeout <= block.timestamp, "not yet timed out");
         selfdestruct(payable(buyer));
     }
 
@@ -63,7 +55,7 @@ contract IoTMicropayment {
         uint256 amount,
         uint256 nonce,
         bytes memory signature
-    ) internal view returns (bool) {
+    ) internal view returns (bool isValid) {
         bytes32 message = prefixed(
             keccak256(abi.encodePacked(signer, amount, nonce, this))
         );
@@ -73,7 +65,7 @@ contract IoTMicropayment {
     function recoverSigner(bytes32 message, bytes memory signature)
         internal
         pure
-        returns (address)
+        returns (address signer)
     {
         (uint8 v, bytes32 r, bytes32 s) = splitSignature(signature);
 
@@ -100,7 +92,7 @@ contract IoTMicropayment {
         return (v, r, s);
     }
 
-    function prefixed(bytes32 _hash) public pure returns (bytes32) {
+    function prefixed(bytes32 _hash) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash)

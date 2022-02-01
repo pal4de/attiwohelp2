@@ -49,8 +49,8 @@ const withProgress = (count, f) => {
   }
 }
 
-const ethInYen = 315620; // 2022年2月1日14:30現在 BitFlyerにて
-const gasPrice = 112; // 2022年2月1日14:30現在 ETH GAS STATIONにて SAFE LOWを選択
+const ethInYen = 313764; // 2022年2月1日14:30現在 BitFlyerにて
+const gasPrice = 100; // 2022年2月1日15:13現在 ETH GAS STATIONにて SAFE LOWを選択
 
 const BN = (x) => new web3.utils.BN(x);
 
